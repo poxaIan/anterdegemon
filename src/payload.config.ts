@@ -1,42 +1,42 @@
+import path from 'path'
+
+import { payloadCloud } from '@payloadcms/plugin-cloud'
+import { postgresAdapter } from '@payloadcms/db-postgres'
+import { webpackBundler } from '@payloadcms/bundler-webpack'
+import { slateEditor } from '@payloadcms/richtext-slate'
 import { buildConfig } from 'payload/config'
 
+import Users from './collections/Users'
+
 export default buildConfig({
-  serverURL: 'http://localhost:3000', // A URL onde seu servidor está rodando
   admin: {
-    user: 'admins', // Coleção que será usada para usuários administrativos
+    user: Users.slug,
+    bundler: webpackBundler(),
   },
-  db: {
-    // Configurações do banco de dados para PostgreSQL
-    client: 'pg', // Especifica que estamos usando PostgreSQL
-    connection: {
-      host: 'localhost',
-      port: 5432,
-      database: 'nome_do_seu_banco_de_dados',
-      user: 'seu_usuario',
-      password: 'sua_senha',
-    },
-  },
+  editor: slateEditor({}),
   collections: [
     {
-      slug: 'posts',
-      labels: {
-        singular: 'Post',
-        plural: 'Posts',
-      },
+      slug: 'paginas',
       fields: [
         {
           name: 'title',
           type: 'text',
-          label: 'Title',
           required: true,
-        },
-        {
-          name: 'content',
-          type: 'textarea',
-          label: 'Content',
-          required: true,
-        },
-      ],
+        }
+      ]
     },
+    Users
   ],
+  typescript: {
+    outputFile: path.resolve(__dirname, 'payload-types.ts'),
+  },
+  graphQL: {
+    schemaOutputFile: path.resolve(__dirname, 'generated-schema.graphql'),
+  },
+  plugins: [payloadCloud()],
+  db: postgresAdapter({
+    pool: {
+      connectionString: process.env.DATABASE_URI,
+    },
+  }),
 })
